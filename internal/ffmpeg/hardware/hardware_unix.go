@@ -122,7 +122,6 @@ func ProbeHardware(bin, name string) string {
 		if run(bin, ProbeQSVH265) {
 			return EngineVAAPI
 		}
-
 		if run(bin, ProbeVAAPIH265) {
 			return EngineQSV
 		}
@@ -131,7 +130,6 @@ func ProbeHardware(bin, name string) string {
 		if run(bin, ProbeQSVJPEG) {
 			return EngineQSV
 		}
-
 		if run(bin, ProbeVAAPIJPEG) {
 			return EngineVAAPI
 		}

@@ -122,6 +122,11 @@ var defaults = map[string]string{
 	"h265/vaapi":  "-c:v hevc_vaapi -g 50 -bf 0 -profile:v main -level:v 5.1 -sei:v 0",
 	"mjpeg/vaapi": "-c:v mjpeg_vaapi",
 
+	// hardware Intel on linux qsv
+	"h264/qsv":  "-c:v h264_qsv -g 50 -bf 0 -profile:v high -level:v 4.1 -async_depth:v 1 -sei:v 0",
+	"h265/qsv":  "-c:v hevc_qsv -g 50 -bf 0 -profile:v main -level:v 5.1 -async_depth:v 1 -sei:v 0",
+	"mjpeg/qsv": "-c:v mjpeg_qsv",
+
 	// hardware Raspberry
 	"h264/v4l2m2m": "-c:v h264_v4l2m2m -g 50 -bf 0",
 	"h265/v4l2m2m": "-c:v hevc_v4l2m2m -g 50 -bf 0",
