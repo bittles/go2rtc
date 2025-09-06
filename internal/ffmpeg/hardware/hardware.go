@@ -101,7 +101,7 @@ func MakeHardware(args *ffmpeg.Args, engine string, defaults map[string]string) 
       for i, filter := range args.Filters {
         if strings.HasPrefix(filter, "scale=") {
           width, height, _ := strings.Cut(filter[6:], ":")
-          args.Filters[i] = "vpp_qsv=" + "w=" + width + "h=" + height
+          args.Filters[i] = "vpp_qsv=" + "w=" + width + ":h=" + height
         }
 
         if strings.HasPrefix(filter, "transpose=") {
