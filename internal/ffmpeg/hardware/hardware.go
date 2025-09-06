@@ -100,8 +100,18 @@ func MakeHardware(args *ffmpeg.Args, engine string, defaults map[string]string) 
 
       for i, filter := range args.Filters {
         if strings.HasPrefix(filter, "scale=") {
-          args.Filters[i] = "scale_qsv=" + filter[6:]
-        }				
+          args.Filters = append(args.Filters[:i], args.Filters[i+1:]...)
+          args.Filters[i] = "vpp_qsv="
+          
+          width, height, _ := strings.Cut(filter[6:], ":")
+          if width != "-1" {
+            args.Filters[i] += "w=" + width
+          }
+          if height != "-1" {
+            args.Filters[i] += "h=" + height
+          }
+        }
+
         if strings.HasPrefix(filter, "transpose=") {
           if filter == "transpose=1,transpose=1" { // 180 degrees half-turn
             args.Filters[i] = "vpp_qsv=transpose=4" // reversal
