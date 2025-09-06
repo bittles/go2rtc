@@ -88,6 +88,35 @@ func MakeHardware(args *ffmpeg.Args, engine string, defaults map[string]string) 
 				args.AddFilter("hwupload")
 			}
 
+    case EngineQSV:
+      args.Codecs[i] = defaults[name+"/"+engine]
+
+      if !args.HasFilters("drawtext=") {
+      args.Input = "-hwaccel qsv -hwaccel_output_format qsv -hwaccel_flags allow_profile_mismatch " + args.Input
+      //args.Input = "-hwaccel qsv -hwaccel_output_format qsv " + args.Input
+
+      for i, filter := range args.Filters {
+        if strings.HasPrefix(filter, "scale=") {
+          args.Filters[i] = "scale_qsv=" + filter[6:]
+        }				
+        if strings.HasPrefix(filter, "transpose=") {
+          if filter == "transpose=1,transpose=1" { // 180 degrees half-turn
+            args.Filters[i] = "vpp_qsv=transpose=4" // reversal
+          } else {
+            args.Filters[i] = "vpp_qsv=transpose=" + filter[10:]
+          }
+        }
+
+        // fix if input doesn't support hwaccel, do nothing when support
+        // insert as first filter before hardware scale and transpose
+        args.InsertFilter("format=vaapi|nv12,hwupload")
+      } else {
+      // enable software pixel for drawtext, scale and transpose
+      args.Input = "-hwaccel vaapi -hwaccel_output_format nv12 -hwaccel_flags allow_profile_mismatch " + args.Input
+
+      args.AddFilter("hwupload")
+      }
+
 		case EngineCUDA:
 			args.Codecs[i] = defaults[name+"/"+engine]
 
@@ -107,24 +136,6 @@ func MakeHardware(args *ffmpeg.Args, engine string, defaults map[string]string) 
 				args.AddFilter("hwupload")
 			}
 
-		case EngineQSV:
-			args.Codecs[i] = defaults[name+"/"+engine]
-
-			args.Input = "-hwaccel qsv -hwaccel_output_format qsv " + args.Input
-
-			for i, filter := range args.Filters {
-				if strings.HasPrefix(filter, "scale=") {
-					args.Filters[i] = "scale_qsv=" + filter[6:]
-				}				
-				if strings.HasPrefix(filter, "transpose=") {
-					if filter == "transpose=1,transpose=1" { // 180 degrees half-turn
-						args.Filters[i] = "vpp_qsv=transpose=4" // reversal
-					} else {
-						args.Filters[i] = "vpp_qsv=transpose=" + filter[10:]
-					}
-				}
-			}
-		
 		case EngineDXVA2:
 			args.Input = "-hwaccel dxva2 -hwaccel_output_format dxva2_vld " + args.Input
 			args.Codecs[i] = defaults[name+"/"+engine]
