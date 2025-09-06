@@ -19,7 +19,7 @@ jobs:
 
       - name: Setup Go
         uses: actions/setup-go@v5
-        with: { go-version: '1.22' }
+        with: { go-version: '1.24' }
 
       - name: Build go2rtc_win64
         env: { GOOS: windows, GOARCH: amd64 }
@@ -29,7 +29,7 @@ jobs:
         with: { name: go2rtc_win64, path: go2rtc.exe }
 
       - name: Build go2rtc_win32
-        env: { GOOS: windows, GOARCH: 386 }
+        env: { GOOS: windows, GOARCH: 386, GOTOOLCHAIN: go1.20.14 }
         run: go build -ldflags "-s -w" -trimpath
       - name: Upload go2rtc_win32
         uses: actions/upload-artifact@v4
@@ -85,7 +85,7 @@ jobs:
         with: { name: go2rtc_linux_mipsel, path: go2rtc }
 
       - name: Build go2rtc_mac_amd64
-        env: { GOOS: darwin, GOARCH: amd64 }
+        env: { GOOS: darwin, GOARCH: amd64, GOTOOLCHAIN: go1.20.14 }
         run: go build -ldflags "-s -w" -trimpath
       - name: Upload go2rtc_mac_amd64
         uses: actions/upload-artifact@v4
@@ -102,14 +102,14 @@ jobs:
         env: { GOOS: freebsd, GOARCH: amd64 }
         run: go build -ldflags "-s -w" -trimpath
       - name: Upload go2rtc_freebsd_amd64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with: { name: go2rtc_freebsd_amd64, path: go2rtc }
 
       - name: Build go2rtc_freebsd_arm64
         env: { GOOS: freebsd, GOARCH: arm64 }
         run: go build -ldflags "-s -w" -trimpath
       - name: Upload go2rtc_freebsd_arm64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with: { name: go2rtc_freebsd_arm64, path: go2rtc }
 
   docker-master:
@@ -159,6 +159,7 @@ jobs:
           platforms: |
             linux/amd64
             linux/386
+            linux/arm/v6
             linux/arm/v7
             linux/arm64/v8
           push: ${{ github.event_name != 'pull_request' }}
