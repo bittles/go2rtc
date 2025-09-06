@@ -76,11 +76,11 @@ func MakeHardware(args *ffmpeg.Args, engine string, defaults map[string]string) 
 							args.Filters[i] = "transpose_vaapi=" + filter[10:]
 						}
 					}
-				}
-
 				// fix if input doesn't support hwaccel, do nothing when support
 				// insert as first filter before hardware scale and transpose
 				args.InsertFilter("format=vaapi|nv12,hwupload")
+				}
+
 			} else {
 				// enable software pixel for drawtext, scale and transpose
 				args.Input = "-hwaccel vaapi -hwaccel_output_format nv12 -hwaccel_flags allow_profile_mismatch " + args.Input
@@ -92,8 +92,11 @@ func MakeHardware(args *ffmpeg.Args, engine string, defaults map[string]string) 
       args.Codecs[i] = defaults[name+"/"+engine]
 
       if !args.HasFilters("drawtext=") {
-      args.Input = "-hwaccel qsv -hwaccel_output_format qsv -hwaccel_flags allow_profile_mismatch " + args.Input
+        args.Input = "-hwaccel qsv -hwaccel_output_format qsv -hwaccel_flags allow_profile_mismatch " + args.Input
       //args.Input = "-hwaccel qsv -hwaccel_output_format qsv " + args.Input
+        if name == "h264" {
+          fixPixelFormat(args)
+        }
 
       for i, filter := range args.Filters {
         if strings.HasPrefix(filter, "scale=") {
@@ -110,6 +113,7 @@ func MakeHardware(args *ffmpeg.Args, engine string, defaults map[string]string) 
         // fix if input doesn't support hwaccel, do nothing when support
         // insert as first filter before hardware scale and transpose
         args.InsertFilter("format=vaapi|nv12,hwupload")
+      }
       } else {
       // enable software pixel for drawtext, scale and transpose
       args.Input = "-hwaccel vaapi -hwaccel_output_format nv12 -hwaccel_flags allow_profile_mismatch " + args.Input
