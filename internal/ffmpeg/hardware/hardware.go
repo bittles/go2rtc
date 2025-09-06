@@ -112,11 +112,11 @@ func MakeHardware(args *ffmpeg.Args, engine string, defaults map[string]string) 
 
         // fix if input doesn't support hwaccel, do nothing when support
         // insert as first filter before hardware scale and transpose
-        args.InsertFilter("format=vaapi|nv12,hwupload")
+        args.InsertFilter("format=qsv|nv12,hwupload")
       }
       } else {
       // enable software pixel for drawtext, scale and transpose
-      args.Input = "-hwaccel vaapi -hwaccel_output_format nv12 -hwaccel_flags allow_profile_mismatch " + args.Input
+      args.Input = "-hwaccel qsv -hwaccel_output_format nv12 -hwaccel_flags allow_profile_mismatch " + args.Input
 
       args.AddFilter("hwupload")
       }
