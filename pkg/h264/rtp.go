@@ -13,9 +13,18 @@ const RTPPacketVersionAVC = 0
 
 const PSMaxSize = 128 // the biggest SPS I've seen is 48 (EZVIZ CS-CV210)
 
-func RTPDepay(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
-	depack := &codecs.H264Packet{IsAVC: true}
+func patchSPS(nal []byte) []byte {
+    if len(nal) >= 4 {
+        nal[3] = 0x29 // Level 4.1
+    }
+    return nal
+}
 
+func RTPDepay(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
+	var cachedSPS []byte
+	var cachedPPS []byte
+
+	depack := &codecs.H264Packet{IsAVC: true}
 	sps, pps := GetParameterSet(codec.FmtpLine)
 	ps := JoinNALU(sps, pps)
 
@@ -96,6 +105,74 @@ func RTPDepay(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
 		}
 
 		//log.Printf("[AVC] %v, len: %d, ts: %10d, seq: %d", NALUTypes(payload), len(payload), packet.Timestamp, packet.SequenceNumber)
+    // ---- PATCH START ----
+
+		var out []byte
+		offset := 0
+
+		for offset+4 <= len(payload) {
+				size := int(binary.BigEndian.Uint32(payload[offset:]))
+				offset += 4
+				if offset+size > len(payload) {
+						break
+				}
+
+				nal := payload[offset : offset+size]
+				nalType := nal[0] & 0x1F
+
+				switch nalType {
+				case NALUTypeSPS:
+						patched := append([]byte(nil), nal...)
+						patched = patchSPS(patched)
+						cachedSPS = append([]byte(nil), patched...)
+
+						binaryBuf := make([]byte, 4)
+						binary.BigEndian.PutUint32(binaryBuf, uint32(len(patched)))
+						out = append(out, binaryBuf...)
+						out = append(out, patched...)
+
+				case NALUTypePPS:
+						cachedPPS = append([]byte(nil), nal...)
+
+						binaryBuf := make([]byte, 4)
+						binary.BigEndian.PutUint32(binaryBuf, uint32(len(nal)))
+						out = append(out, binaryBuf...)
+						out = append(out, nal...)
+
+				case NALUTypeIFrame:
+						if cachedSPS != nil && cachedPPS != nil {
+								// inject patched SPS
+								binaryBuf := make([]byte, 4)
+								binary.BigEndian.PutUint32(binaryBuf, uint32(len(cachedSPS)))
+								out = append(out, binaryBuf...)
+								out = append(out, cachedSPS...)
+
+								// inject PPS
+								binary.BigEndian.PutUint32(binaryBuf, uint32(len(cachedPPS)))
+								out = append(out, binaryBuf...)
+								out = append(out, cachedPPS...)
+						}
+
+						binaryBuf := make([]byte, 4)
+						binary.BigEndian.PutUint32(binaryBuf, uint32(len(nal)))
+						out = append(out, binaryBuf...)
+						out = append(out, nal...)
+
+				default:
+						binaryBuf := make([]byte, 4)
+						binary.BigEndian.PutUint32(binaryBuf, uint32(len(nal)))
+						out = append(out, binaryBuf...)
+						out = append(out, nal...)
+				}
+
+				offset += size
+		}
+
+		if len(out) > 0 {
+				payload = out
+		}
+
+		// ---- PATCH END ----
 
 		clone := *packet
 		clone.Version = RTPPacketVersionAVC
