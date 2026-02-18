@@ -21,8 +21,6 @@ func patchSPS(nal []byte) []byte {
 }
 
 func RTPDepay(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
-	var cachedSPS []byte
-	var cachedPPS []byte
 
 	depack := &codecs.H264Packet{IsAVC: true}
 	sps, pps := GetParameterSet(codec.FmtpLine)
@@ -112,21 +110,28 @@ func RTPDepay(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
 		}
 
 		//log.Printf("[AVC] %v, len: %d, ts: %10d, seq: %d", NALUTypes(payload), len(payload), packet.Timestamp, packet.SequenceNumber)
-		// Convert AVCC to AnnexB
-		annex := annexb.AVCC2AnnexB(payload)
+		// ---- SPS LEVEL PATCH START ----
 
-		// Walk and patch all SPS NALs
-		annex = annexb.WalkNALUs(annex, func(nal []byte) []byte {
-				if len(nal) > 0 && (nal[0]&0x1F) == NALUTypeSPS {
-						if len(nal) >= 4 {
-								nal[3] = 0x29 // Level 4.1
-						}
+		offset := 0
+		for offset+4 <= len(payload) {
+				size := int(binary.BigEndian.Uint32(payload[offset:]))
+				offset += 4
+
+				if offset+size > len(payload) {
+						break
 				}
-				return nal
-		})
 
-		// Convert back to AVCC
-		payload = annexb.AnnexB2AVCC(annex)
+				nal := payload[offset : offset+size]
+
+				if len(nal) >= 4 && (nal[0]&0x1F) == NALUTypeSPS {
+						nal[3] = 0x29 // Force level 4.1
+				}
+
+				offset += size
+		}
+
+		// ---- SPS LEVEL PATCH END ----
+
 
 
 		clone := *packet
