@@ -26,7 +26,14 @@ func RTPDepay(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
 
 	depack := &codecs.H264Packet{IsAVC: true}
 	sps, pps := GetParameterSet(codec.FmtpLine)
+
+	// Patch level in SDP SPS
+	if len(sps) >= 4 {
+			sps[3] = 0x29 // Level 4.1
+	}
+
 	ps := JoinNALU(sps, pps)
+
 
 	buf := make([]byte, 0, 512*1024) // 512K
 
