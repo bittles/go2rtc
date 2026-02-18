@@ -112,74 +112,22 @@ func RTPDepay(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
 		}
 
 		//log.Printf("[AVC] %v, len: %d, ts: %10d, seq: %d", NALUTypes(payload), len(payload), packet.Timestamp, packet.SequenceNumber)
-    // ---- PATCH START ----
+		// Convert AVCC to AnnexB
+		annex := annexb.AVCC2AnnexB(payload)
 
-		var out []byte
-		offset := 0
-
-		for offset+4 <= len(payload) {
-				size := int(binary.BigEndian.Uint32(payload[offset:]))
-				offset += 4
-				if offset+size > len(payload) {
-						break
-				}
-
-				nal := payload[offset : offset+size]
-				nalType := nal[0] & 0x1F
-
-				switch nalType {
-				case NALUTypeSPS:
-						patched := append([]byte(nil), nal...)
-						patched = patchSPS(patched)
-						cachedSPS = append([]byte(nil), patched...)
-
-						binaryBuf := make([]byte, 4)
-						binary.BigEndian.PutUint32(binaryBuf, uint32(len(patched)))
-						out = append(out, binaryBuf...)
-						out = append(out, patched...)
-
-				case NALUTypePPS:
-						cachedPPS = append([]byte(nil), nal...)
-
-						binaryBuf := make([]byte, 4)
-						binary.BigEndian.PutUint32(binaryBuf, uint32(len(nal)))
-						out = append(out, binaryBuf...)
-						out = append(out, nal...)
-
-				case NALUTypeIFrame:
-						if cachedSPS != nil && cachedPPS != nil {
-								// inject patched SPS
-								binaryBuf := make([]byte, 4)
-								binary.BigEndian.PutUint32(binaryBuf, uint32(len(cachedSPS)))
-								out = append(out, binaryBuf...)
-								out = append(out, cachedSPS...)
-
-								// inject PPS
-								binary.BigEndian.PutUint32(binaryBuf, uint32(len(cachedPPS)))
-								out = append(out, binaryBuf...)
-								out = append(out, cachedPPS...)
+		// Walk and patch all SPS NALs
+		annex = annexb.WalkNALUs(annex, func(nal []byte) []byte {
+				if len(nal) > 0 && (nal[0]&0x1F) == NALUTypeSPS {
+						if len(nal) >= 4 {
+								nal[3] = 0x29 // Level 4.1
 						}
-
-						binaryBuf := make([]byte, 4)
-						binary.BigEndian.PutUint32(binaryBuf, uint32(len(nal)))
-						out = append(out, binaryBuf...)
-						out = append(out, nal...)
-
-				default:
-						binaryBuf := make([]byte, 4)
-						binary.BigEndian.PutUint32(binaryBuf, uint32(len(nal)))
-						out = append(out, binaryBuf...)
-						out = append(out, nal...)
 				}
+				return nal
+		})
 
-				offset += size
-		}
+		// Convert back to AVCC
+		payload = annexb.AnnexB2AVCC(annex)
 
-		if len(out) > 0 {
-				payload = out
-		}
-
-		// ---- PATCH END ----
 
 		clone := *packet
 		clone.Version = RTPPacketVersionAVC
