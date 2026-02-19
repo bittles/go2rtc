@@ -187,6 +187,14 @@ func probe(client *Client, quality byte) ([]*core.Media, error) {
 			if vcodec == nil {
 				buf := annexb.EncodeToAVCC(pkt.Payload)
 				if len(buf) >= 5 && h264.NALUType(buf) == h264.NALUTypeSPS {
+					// Patch level_idc inside AVCC SPS
+					size := int(binary.BigEndian.Uint32(buf))
+					if 4+size <= len(buf) {
+						sps := buf[4 : 4+size]
+						if len(sps) >= 4 {
+							sps[3] = 0x29 // Force Level 4.1
+						}
+					}
 					vcodec = h264.AVCCToCodec(buf)
 				}
 			}
