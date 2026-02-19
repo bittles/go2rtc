@@ -2,6 +2,7 @@
 package h264
 
 import (
+  "log"
 	"bytes"
 	"encoding/base64"
 	"encoding/binary"
@@ -84,6 +85,7 @@ func NALUTypes(avcc []byte) []byte {
 }
 
 func AVCCToCodec(avcc []byte) *core.Codec {
+  log.Info().Msg("AVCCToCodec CALLED")
 	buf := bytes.NewBufferString("packetization-mode=1")
 
 	for {
