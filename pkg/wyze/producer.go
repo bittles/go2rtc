@@ -1,6 +1,7 @@
 package wyze
 
 import (
+	"github.com/rs/zerolog/log"
 	"fmt"
 	"net/url"
 	"time"
@@ -34,7 +35,7 @@ func NewProducer(rawURL string) (*Producer, error) {
 	var quality byte
 	switch s := query.Get("subtype"); s {
 	case "", "hd":
-		quality = 0
+		quality = 3
 	case "sd":
 		quality = FrameSize360P
 	default:
@@ -101,6 +102,7 @@ func (p *Producer) Start() error {
 				if naluType == h264.NALUTypeIFrame || naluType == h264.NALUTypePFrame {
 
 					// AVCC AUD
+					log.Info().Msg("wyze/producer injecting AUD")
 					aud := []byte{
 						0x00, 0x00, 0x00, 0x02,
 						0x09, 0xF0,
