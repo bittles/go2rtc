@@ -1,3 +1,5 @@
+#This fork is WIP to get wyze streams from a Cam V4 through go2rtc then through Scrypted to work for Homekit Secure Video for recording motion fragments.  Using docker-wyze-bridge to Scrypted worked, but audio always fell out of sync.  Then go2rtc's wyze support was added with support for newer firmwares and audio is fixed, but streams weren't recording through Homekit anymore.  I found that SDP advertised h264 4.1, but NAL units would restate it as level 5.0.  Patches put in to inject in bits to make h264 level consistent to 4.1.  Homekit also wants NAL AUD units which the stream also lacked, currently trying to inject those into the stream.
+
 <h1 align="center">
   <a href="https://github.com/AlexxIT/go2rtc">
     <img src="./website/images/logo.gif" alt="go2rtc - GitHub">
