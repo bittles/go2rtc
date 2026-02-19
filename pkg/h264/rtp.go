@@ -118,7 +118,30 @@ func RTPPay(mtu uint16, handler core.HandlerFunc) core.HandlerFunc {
 			handler(packet)
 			return
 		}
+		// ---- FORCE SPS LEVEL 4.1 ----
+		payload := packet.Payload
+		offset := 0
 
+		for offset+4 <= len(payload) {
+				size := int(binary.BigEndian.Uint32(payload[offset:]))
+				offset += 4
+
+				if offset+size > len(payload) {
+						break
+				}
+
+				nal := payload[offset : offset+size]
+
+				// SPS NAL type = 7
+				if len(nal) >= 4 && (nal[0]&0x1F) == NALUTypeSPS {
+						nal[3] = 0x29 // Level 4.1
+				}
+
+				offset += size
+		}
+
+		packet.Payload = payload
+		// ---- END PATCH ----
 		payloads := payloader.Payload(mtu, packet.Payload)
 		last := len(payloads) - 1
 		for i, payload := range payloads {
