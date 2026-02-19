@@ -16,17 +16,35 @@ func RepairAVCC(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
 	sps, pps := GetParameterSet(codec.FmtpLine)
 	ps := JoinNALU(sps, pps)
 
-	return func(packet *rtp.Packet) {
-		// this can happen for FLV from FFmpeg
-		if NALUType(packet.Payload) == NALUTypeSEI {
-			size := int(binary.BigEndian.Uint32(packet.Payload)) + 4
-			packet.Payload = packet.Payload[size:]
-		}
-		if NALUType(packet.Payload) == NALUTypeIFrame {
-			packet.Payload = Join(ps, packet.Payload)
-		}
-		handler(packet)
-	}
+    // Prebuilt AVCC AUD (length-prefixed)
+    aud := []byte{
+        0x00, 0x00, 0x00, 0x02, // length = 2
+        0x09, 0xF0,             // AUD
+    }
+
+    return func(packet *rtp.Packet) {
+
+        // Remove SEI if present
+        if NALUType(packet.Payload) == NALUTypeSEI {
+            size := int(binary.BigEndian.Uint32(packet.Payload)) + 4
+            packet.Payload = packet.Payload[size:]
+        }
+
+        naluType := NALUType(packet.Payload)
+
+        // Inject AUD before slices
+        if naluType == NALUTypeIFrame || naluType == NALUTypePFrame {
+            // Insert AUD
+            packet.Payload = append(aud, packet.Payload...)
+        }
+
+        // Inject SPS/PPS before IDR
+        if naluType == NALUTypeIFrame {
+            packet.Payload = Join(ps, packet.Payload)
+        }
+
+        handler(packet)
+    }
 }
 
 func JoinNALU(nalus ...[]byte) (avcc []byte) {
