@@ -1,7 +1,7 @@
 package h264
 
 import (
-	"github.com/rs/zerolog/log"
+	"log"
 	"encoding/binary"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
