@@ -1,6 +1,7 @@
 package h264
 
 import (
+	"fmt"
 	"encoding/binary"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
