@@ -17,6 +17,7 @@ func RepairAVCC(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
 	ps := JoinNALU(sps, pps)
 
     // Prebuilt AVCC AUD (length-prefixed)
+	log.Info().Msg("AVCCToCodec injecting AUD")
     aud := []byte{
         0x00, 0x00, 0x00, 0x02, // length = 2
         0x09, 0xF0,             // AUD
@@ -103,7 +104,6 @@ func NALUTypes(avcc []byte) []byte {
 }
 
 func AVCCToCodec(avcc []byte) *core.Codec {
-  log.Info().Msg("AVCCToCodec CALLED")
 	buf := bytes.NewBufferString("packetization-mode=1")
 
 	for {
