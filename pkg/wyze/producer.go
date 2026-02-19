@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"time"
+	"encoding/binary"
 
 	"github.com/AlexxIT/go2rtc/pkg/aac"
 	"github.com/AlexxIT/go2rtc/pkg/core"
