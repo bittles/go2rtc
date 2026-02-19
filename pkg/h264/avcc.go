@@ -99,6 +99,10 @@ func AVCCToCodec(avcc []byte) *core.Codec {
 
 		switch NALUType(avcc) {
 		case NALUTypeSPS:
+			// Force level_idc to 4.1
+			if size >= 8 {
+					avcc[7] = 0x29
+			}
 			buf.WriteString(";profile-level-id=")
 			buf.WriteString(hex.EncodeToString(avcc[5:8]))
 			buf.WriteString(";sprop-parameter-sets=")
