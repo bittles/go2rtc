@@ -1,7 +1,7 @@
 package h264
 
 import (
-	"log"
+	"fmt"
 	"encoding/binary"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
@@ -28,8 +28,7 @@ func RTPDepay(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
 
 	// Patch level in SDP SPS
 	// outputting fmptline to log
-	log.Printf("[RTP] Fmtpline: %s", codec.FmtpLine)
-	//fmt.Println(codec.FmtpLine)
+	fmt.Println(codec.FmtpLine)
 	if len(sps) >= 4 {
 			sps[3] = 0x29 // Level 4.1
 	}
