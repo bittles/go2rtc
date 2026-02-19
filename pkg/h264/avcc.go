@@ -2,7 +2,7 @@
 package h264
 
 import (
-  "log"
+  "github.com/rs/zerolog/log"
 	"bytes"
 	"encoding/base64"
 	"encoding/binary"
