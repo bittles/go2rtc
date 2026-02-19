@@ -85,9 +85,33 @@ func (p *Producer) Start() error {
 		switch codecID := pkt.Codec; codecID {
 		case tutk.CodecH264:
 			name = core.CodecH264
+			// ----- STRIP LEADING SEI -----
+			if len(payload) >= 5 && h264.NALUType(payload) == h264.NALUTypeSEI {
+			    size := int(binary.BigEndian.Uint32(payload))
+			    if 4+size <= len(payload) {
+			        payload = payload[4+size:]
+			    }
+			}
+			
+			// ----- DETECT FIRST NAL -----
+			if len(payload) >= 5 {
+			    naluType := h264.NALUType(payload)
+			
+			    if naluType == h264.NALUTypeIFrame || naluType == h264.NALUTypePFrame {
+			
+			        // AVCC AUD
+			        aud := []byte{
+			            0x00, 0x00, 0x00, 0x02,
+			            0x09, 0xF0,
+			        }
+			
+			        payload = append(aud, payload...)
+			    }
+			}
+			
 			pkt2 = &core.Packet{
-				Header:  rtp.Header{SequenceNumber: uint16(pkt.FrameNo), Timestamp: pkt.Timestamp},
-				Payload: annexb.EncodeToAVCC(pkt.Payload),
+			    Header:  rtp.Header{SequenceNumber: uint16(pkt.FrameNo), Timestamp: pkt.Timestamp},
+			    Payload: payload,
 			}
 
 		case tutk.CodecH265:
