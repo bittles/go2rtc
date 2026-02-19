@@ -26,6 +26,8 @@ func RTPDepay(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
 	sps, pps := GetParameterSet(codec.FmtpLine)
 
 	// Patch level in SDP SPS
+	// outputting fmptline to log
+	fmt.Println(codec.FmtpLine)
 	if len(sps) >= 4 {
 			sps[3] = 0x29 // Level 4.1
 	}
