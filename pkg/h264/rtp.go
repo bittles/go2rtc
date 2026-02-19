@@ -9,7 +9,7 @@ import (
 	"github.com/pion/rtp"
 	"github.com/pion/rtp/codecs"
 )
-
+panic("RTPDepay called")
 const RTPPacketVersionAVC = 0
 
 const PSMaxSize = 128 // the biggest SPS I've seen is 48 (EZVIZ CS-CV210)
@@ -22,7 +22,7 @@ func patchSPS(nal []byte) []byte {
 }
 
 func RTPDepay(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
-  panic("RTPDepay called")
+
 	depack := &codecs.H264Packet{IsAVC: true}
 	sps, pps := GetParameterSet(codec.FmtpLine)
 
