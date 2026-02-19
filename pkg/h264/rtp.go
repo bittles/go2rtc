@@ -2,6 +2,8 @@ package h264
 
 import (
 	"github.com/rs/zerolog/log"
+	"github.com/AlexxIT/go2rtc/internal/app"
+	"github.com/AlexxIT/go2rtc/pkg/core"
 	"encoding/binary"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
@@ -9,7 +11,7 @@ import (
 	"github.com/pion/rtp"
 	"github.com/pion/rtp/codecs"
 )
-panic("RTPDepay called")
+
 const RTPPacketVersionAVC = 0
 
 const PSMaxSize = 128 // the biggest SPS I've seen is 48 (EZVIZ CS-CV210)
@@ -20,7 +22,7 @@ func patchSPS(nal []byte) []byte {
     }
     return nal
 }
-
+var log zerolog.Logger
 func RTPDepay(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
 
 	depack := &codecs.H264Packet{IsAVC: true}
