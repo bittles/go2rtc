@@ -102,7 +102,7 @@ func (p *Producer) Start() error {
 				if naluType == h264.NALUTypeIFrame || naluType == h264.NALUTypePFrame {
 
 					// AVCC AUD
-					log.Info().Msg("wyze/producer injecting AUD")
+					//log.Info().Msg("wyze/producer injecting AUD")
 					aud := []byte{
 						0x00, 0x00, 0x00, 0x02,
 						0x09, 0xF0,
