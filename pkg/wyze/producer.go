@@ -1,7 +1,7 @@
 package wyze
 
 import (
-	"github.com/rs/zerolog/log"
+	//"github.com/rs/zerolog/log"
 	"fmt"
 	"net/url"
 	"time"
